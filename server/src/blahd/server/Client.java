@@ -101,17 +101,16 @@ public class Client extends Thread {
 				String line = reader.readLine();
 				if (line == null) {
 					// connection closed
-					daemon.removeClient(this);
-					return;
+					break;
 				}
 				daemon.processMessage(this, line);
 			} catch (Exception e) {
 				// there was an error communicating with client. Let's disconnect
-				System.out.println("Client " + name + " disconnected");
-				daemon.removeClient(this);
-				return;
+				System.out.println("Error communicating with client... letting it go");
 			}
 		}
+		daemon.removeClient(this);
+		return;
 	}
 	
 	/**

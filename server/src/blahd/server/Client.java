@@ -26,7 +26,16 @@ import java.util.Date;
  * 	<li>3 Server will send a "You said your name was?" message
  * 	<li>4 Client will reply with his/her name
  * 	<li>5 Server will reply back with a "welcome" message.
- *
+ * <p>
+ * Messages sent <b>from</b> the client will only consist of the line that the client wrote
+ * <p>
+ * Messages sent <b>to</b> the client will consist of 4 lines:
+ * <ul>
+ *	<li>name of the client who sent it
+ *	<li>Date when it was sent (milliseconds since UNIX epoch)
+ *	<li>Line of the message
+ *	<li>An empty line
+ * </ul>
  */
 public class Client extends Thread {
 	
@@ -85,7 +94,19 @@ public class Client extends Thread {
 			// if there's any kind of exception when establishing the communication, will ask Daemon to drop us
 			daemon.removeClient(this);
 		}
-		daemon.removeClient(this);
+		
+		// Let's start getting messages until client disconnects
+		while (true) {
+			try {
+				String line = reader.readLine();
+				daemon.processMessage(this, line);
+			} catch (Exception e) {
+				// there was an error communicating with client. Let's disconnect
+				System.out.println("Client " + name + " disconnected");
+				daemon.removeClient(this);
+				return;
+			}
+		}
 	}
 	
 	/**
@@ -101,6 +122,7 @@ public class Client extends Thread {
 		writer.newLine();
 		writer.write(message);
 		writer.newLine();
+		writer.newLine();
 		writer.flush();
 	}
 	
@@ -109,6 +131,7 @@ public class Client extends Thread {
 	 */
 	public void close() {
 		try {
+			writer.flush();
 			writer.close();
 		} catch (Exception e) {}
 		try {
@@ -116,7 +139,10 @@ public class Client extends Thread {
 		} catch (Exception e) {}
 		try {
 			socket.close();
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("Closed connection to " + name);
 	}
 	
 	/**

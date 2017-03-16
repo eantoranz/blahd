@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Date;
 
 /*
  * Copyright 2017 Edmundo Carmona Antoranz
@@ -70,6 +71,25 @@ public class Daemon {
 		}
 		// let's close everything, just in case
 		client.close();
+	}
+	
+	/**
+	 * Process a message from a client
+	 * @param client
+	 * @param message
+	 */
+	synchronized public void processMessage(Client client, String message) {
+		Date now = new Date();
+		for (Client aClient: clients) {
+			if (aClient != null && aClient != client && aClient.getClientName() != null) {
+				try {
+					aClient.sendMessage(client.getClientName(), now, message);
+				} catch (Exception e) {
+					System.err.println("Error sending message to client " + aClient.getClientName());
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	public static void main(String[] args) throws IOException {

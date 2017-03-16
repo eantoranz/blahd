@@ -99,6 +99,11 @@ public class Client extends Thread {
 		while (true) {
 			try {
 				String line = reader.readLine();
+				if (line == null) {
+					// connection closed
+					daemon.removeClient(this);
+					return;
+				}
 				daemon.processMessage(this, line);
 			} catch (Exception e) {
 				// there was an error communicating with client. Let's disconnect

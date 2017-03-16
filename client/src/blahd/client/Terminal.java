@@ -5,7 +5,9 @@ package blahd.client;
  * Released under the terms of GPLv3
  */
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Date;
 
 /**
@@ -21,7 +23,17 @@ public class Terminal implements AbstractClient {
 	 * @param port
 	 */
 	private Terminal(String host, int port, String name) throws IOException {
-		new ClientConnection(host, port, name);
+		ClientConnection connection = new ClientConnection(this, host, port, name);
+		
+		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+		while (true) {
+			String message = reader.readLine();
+			if (message == null) {
+				break;
+			}
+			connection.sendMessage(message);
+		}
+		System.exit(0);
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -30,7 +42,12 @@ public class Terminal implements AbstractClient {
 
 	@Override
 	public void receiveMessage(String name, Date when, String message) {
-		System.out.println((char)0x0d + name + ": " + message);
+		System.out.println(name + ": " + message);
+	}
+	
+	public void disconnect() {
+		System.out.println("disconnecting");
+		System.exit(0);
 	}
 
 }

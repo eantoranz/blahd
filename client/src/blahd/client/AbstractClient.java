@@ -18,4 +18,9 @@ public interface AbstractClient {
 	 */
 	public void receiveMessage(String name, Date when, String message);
 	
+	/**
+	 * Disconnect
+	 */
+	public void disconnect();
+	
 }

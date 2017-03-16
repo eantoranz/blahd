@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.Date;
 
 /*
  * Copyright 2017 Edmundo Carmona Antoranz
@@ -16,16 +17,19 @@ import java.net.Socket;
  * Connection to server (independent of type of client used)
  *
  */
-public class ClientConnection {
+public class ClientConnection extends Thread {
+	
+	private AbstractClient client;
 
 	private BufferedReader reader;
 	private BufferedWriter writer;
 	
 	private Socket socket;
 
-	public ClientConnection(String host, int port, String name)
+	public ClientConnection(AbstractClient client, String host, int port, String name)
 			throws IOException {
 		// let's try to establish a connection, we send a message and then we disconnect
+		this.client = client;
 		socket = new Socket(host, port);
 		reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
@@ -49,10 +53,54 @@ public class ClientConnection {
 		if (!"welcome".equals(line)) {
 			throw new IOException("Didn't get a welcome message");
 		}
-		writer.write("Hi!");
+		start();
+	}
+	
+	public void run() {
+		System.out.println("Connection established");
+		while (true) {
+			/*
+			 * a message is comprised of:
+			 * - name of person who sent it
+			 * - when the message was sent (milliseconds since UNIX epoch
+			 * - content of the message itself
+			 * - empty line
+			 */
+			try {
+				String name = reader.readLine();
+				if (name == null) {
+					break;
+				}
+				if (name.trim().length() == 0) {
+					throw new IOException("Didn't get a name for the message");
+				}
+				String dateLine = reader.readLine();
+				if (dateLine == null) {
+					break;
+				}
+				Date date = new Date(Long.parseLong(dateLine));
+				String message = reader.readLine();
+				if (message == null) {
+					break;
+				}
+				String separator = reader.readLine();
+				if (separator == null) {
+					break;
+				}
+				client.receiveMessage(name, date, message);
+			}catch (IOException e) {
+				System.err.println("Error reading message");
+				e.printStackTrace();
+			}
+		}
+		// notify of disconnection
+		client.disconnect();
+	}
+	
+	public void sendMessage(String message) throws IOException {
+		writer.write(message);
 		writer.newLine();
 		writer.flush();
-		socket.close();
 	}
 
 }

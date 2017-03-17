@@ -6,6 +6,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
 
+import blahd.server.plugin.Echo;
+import blahd.server.plugin.Plugin;
+
 /*
  * Copyright 2017 Edmundo Carmona Antoranz
  * Released under the terms of GPLv3
@@ -20,12 +23,15 @@ public class Daemon {
 	
 	private Client[] clients = new Client[5];
 	private ServerSocket socket;
+	private Plugin plugin; // a plugin, if it was set up
 	
 	/**
 	 * Create a daemon instance.
 	 * @param port port where daemon will try to listen on
 	 */
 	private Daemon(int port) throws IOException {
+		plugin = new Echo();
+		plugin.setDaemon(this);
 		System.out.println("Starting Daemon on port " + port);
 		socket = new ServerSocket(port);
 		while (true) {
@@ -80,6 +86,10 @@ public class Daemon {
 	 */
 	synchronized public void processMessage(Client client, String message) {
 		Date now = new Date();
+		// first, let's process it through the plugin (if it's set)
+		if (plugin != null) {
+			plugin.messageReceived(client, now, message);
+		}
 		for (Client aClient: clients) {
 			if (aClient != null && aClient != client && aClient.getClientName() != null) {
 				try {

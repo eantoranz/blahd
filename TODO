@@ -1,0 +1,23 @@
+Project-wide
+- Create a .gitignore
+- Turn the project into a maven project
+- Turn the project into a gradl project
+
+Server side
+
+- Use a default port if it's not provided as a param on startup
+- There's a 10-client limit. Get rid of it
+- Use a timeout for clients that haven't said anything after a while
+- Develop a moderator bot (plugin) that complains if a user says a word from a dictionary (use the echo plugin as a reference)
+- Switch implementation to NIO
+- Implement logging using log4j
+- Avoid duplicate client names
+
+Client side
+- Switch implementation to NIO
+- If the user doesn't provide a name when calling the client, ask for the name interactively
+
+
+Advanced Topics
+- Include a .gitignore at the very first revision of the project (has implications)
+

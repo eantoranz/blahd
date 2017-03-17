@@ -29,9 +29,11 @@ public class Daemon {
 	 * Create a daemon instance.
 	 * @param port port where daemon will try to listen on
 	 */
-	private Daemon(int port) throws IOException {
-		plugin = new Echo();
-		plugin.setDaemon(this);
+	private Daemon(int port, Plugin plugin) throws IOException {
+		this.plugin = plugin;
+		if (plugin != null) {
+			plugin.setDaemon(this);
+		}
 		System.out.println("Starting Daemon on port " + port);
 		socket = new ServerSocket(port);
 		while (true) {
@@ -88,8 +90,23 @@ public class Daemon {
 		Date now = new Date();
 		// first, let's process it through the plugin (if it's set)
 		if (plugin != null) {
-			plugin.messageReceived(client, now, message);
+			String broadcastMessage = plugin.messageReceived(client, now, message);
+			if (broadcastMessage != null) {
+				// a message has to be sent to all clients on behalf of the bot
+				for (Client aClient: clients) {
+					if (aClient != null) {
+						try {
+							aClient.sendMessage("Blahd Server", now, broadcastMessage);
+						} catch (Exception e) {
+							System.err.println("Error sending message to client " + aClient.getClientName());
+							e.printStackTrace();
+						}
+					}
+				}
+			}
 		}
+		
+		// sending message to all clients
 		for (Client aClient: clients) {
 			if (aClient != null && aClient != client && aClient.getClientName() != null) {
 				try {
@@ -101,14 +118,23 @@ public class Daemon {
 			}
 		}
 	}
-
-	public static void main(String[] args) throws IOException {
+	
+	public static void main(String[] args) throws Exception {
 		System.out.println("BlahD Server");
 		System.out.println("Copyright 2017 Edmundo Carmona Antoranz");
 		System.out.println("Released under the terms of GPLv3");
 		
+		Plugin plugin = null;
+		
+		String pluginClassName = System.getenv("blahd_plugin");
+		if (pluginClassName != null) {
+			System.out.println("Creating plugin " + pluginClassName);
+			Class<?> pluginClass = Class.forName("blahd.server.plugin." + pluginClassName);
+			plugin = (Plugin) pluginClass.newInstance();
+		}
+		
 		int port = Integer.parseInt(args[0]);
-		new Daemon(port);
+		new Daemon(port, plugin);
 	}
 
 }

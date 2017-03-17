@@ -16,20 +16,16 @@ import blahd.server.Daemon;
  */
 public class Echo implements Plugin {
 	
-	private Daemon daemon;
-	
 	@Override
 	public String messageReceived(Client client, Date time, String message) {
 		try {
-			client.sendMessage("Echo", time, message);
+			client.sendMessage("BlahD Echo", time, message);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
 	
-	public void setDaemon(Daemon daemon) {
-		this.daemon = daemon;
-	}
+	public void setDaemon(Daemon daemon) {}
 
 }
